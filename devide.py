@@ -3,6 +3,7 @@ import sys
 import cv2
 import numpy as np
 import os
+import argparse
 import matplotlib.pyplot as plt
 plt.style.use('seaborn')
 
@@ -60,9 +61,10 @@ def split_lines(image, valleys, flag=0):
 
 
 # flag为0，进行初次切割，flag为1，对单个字符进一步进行处理
-def process_image(binary_img_path, flag = 0):
+def process_image(opt):
+    binary_img_path = opt.source
     # 读入已经二值化后的图像
-    binary_img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    binary_img = cv2.imread(binary_img_path, cv2.IMREAD_GRAYSCALE)
 
     # 获取不包含扩展名的图像名，以作为后面建文件夹所用
     filename_without_ext = os.path.splitext(os.path.basename(binary_img_path))[0]
@@ -112,7 +114,7 @@ def process_image(binary_img_path, flag = 0):
                 else:
                     print('保存分割后的图片【' + filePath + '】失败！')
 
-            return dir_name
+        return dir_name
 
 def narmalize_process(single_image_dir):
     for image_dir in os.listdir(single_image_dir):
@@ -143,11 +145,16 @@ def narmalize_process(single_image_dir):
 
                 cv2.imwrite(image_path, img_cropped)
 
-
-if __name__ == "__main__":
-    image_path = "binary_images/IMG_0154_0.jpg";
-    single_image_dir = process_image(image_path)
+def run_devide(opt):
+    single_image_dir = process_image(opt)
     print('===============================初步切割结束===============================')
     narmalize_process(single_image_dir)
     print('===============================尺寸归一化结束===============================')
+    return single_image_dir
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--source', type=str, default='binary_images/IMG_0155_0.jpg', help='picture file')
+    opt = parser.parse_args()
+    run_devide(opt)
     sys.exit()

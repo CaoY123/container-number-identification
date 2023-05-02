@@ -4,10 +4,9 @@ from torchvision import transforms
 from torch import nn, optim
 import numpy as np
 import torch
-import time
 import sys
-import cv2
 import os
+import argparse
 from PIL import Image, ImageDraw, ImageFont
 # Recognize a single character
 
@@ -117,36 +116,42 @@ def predict(img,net,device=None):
                 net.train()  # Go back to training mode
     return res
 
-net = LeNet()
-print(net)
-# sets the learning rate and number of epochs to use during training.
-lr, num_epochs = 0.001, 20
-batch_size=256
-# creates an optimizer object using the Adam optimization algorithm,
-# which is used to update the weights of the network during training.
-optimizer = torch.optim.Adam(net.parameters(), lr=lr)
-# sets the file path for the saved model checkpoint.
-checkpoint_save_path = "./LeNet1.pth"
-if os.path.exists(checkpoint_save_path ):
-    print('load the model')
-    # loads the saved checkpoint if it exists.
-    net.load_state_dict(torch.load(checkpoint_save_path))
-else:
-    print("不存在相应的权重文件，程序结束")
+def run_recognition(opt):
+    net = LeNet()
+    print(net)
+    # sets the learning rate and number of epochs to use during training.
+    lr, num_epochs = 0.001, 20
+    batch_size = 256
+    # creates an optimizer object using the Adam optimization algorithm,
+    # which is used to update the weights of the network during training.
+    optimizer = torch.optim.Adam(net.parameters(), lr=lr)
+    # sets the file path for the saved model checkpoint.
+    checkpoint_save_path = "./LeNet1.pth"
+    if os.path.exists(checkpoint_save_path):
+        print('load the model')
+        # loads the saved checkpoint if it exists.
+        net.load_state_dict(torch.load(checkpoint_save_path))
+    else:
+        print("不存在相应的权重文件，程序结束")
+        sys.exit()
+
+    pre_transform = transforms.Compose([
+        transforms.Grayscale(),
+        transforms.CenterCrop(size=(32, 32)),
+        transforms.ToTensor()
+    ])
+    preset = ImageFolder(opt.source, transform=pre_transform)
+    pre_iter = DataLoader(preset)
+    ans = predict(pre_iter, net, device)
+    print('the result is: ' + ans)
+    print('===============================The end of recognition procedure===============================')
+    return ans
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--source', type=str, default='./singledigit/IMG_0155_0', help='picture file')
+    opt = parser.parse_args()
+    run_recognition(opt)
+    # pre_path = './singledigit/IMG_0154_0/'
     sys.exit()
-
-
-pre_path = './singledigit/IMG_0154_0/'
-
-pre_transform=transforms.Compose([
-    transforms.Grayscale(),
-    transforms.CenterCrop(size=(32,32)),
-    transforms.ToTensor()
-])
-preset=ImageFolder(pre_path,transform=pre_transform)
-pre_iter = DataLoader(preset)
-ans=predict(pre_iter,net, device)
-print('the result is: '+ans)
-print('===============================The end of recognition procedure===============================')
-sys.exit()
 

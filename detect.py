@@ -165,31 +165,33 @@ def detect(opt, save_img=False):
         #print(f"Results saved to {save_dir}{s}")
 
     print(f'Done. ({time.time() - t0:.3f}s)')
+    return save_dir
 
 def detect_main(opt):
     print('opt参数情况：')
     print(opt)
     with torch.no_grad():
-        if opt.update:  # update all models (to fix SourceChangeWarning)
-            for opt.weights in ['yolov7.pt']:
-                detect(opt)
-                strip_optimizer(opt.weights)
-        else:
-            detect(opt)
+        # if opt.update:  # update all models (to fix SourceChangeWarning)
+        #     for opt.weights in ['yolov7.pt']:
+        #         detect(opt)
+        #         strip_optimizer(opt.weights)
+        # else:
+        return detect(opt)
+
+def run_detection(opt):
+    print(opt)
+    #check_requirements(exclude=('pycocotools', 'thop'))
+    return detect_main(opt)
 
 if __name__ == '__main__':
-    # 插入调试断点
-    # pdb.set_trace()
-    # 接收来自命令行的参数
-    # print(sys.argv[1:])
-    # detect_main(sys.argv[1:]);
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', nargs='+', type=str, default='yolov7.pt', help='model.pt path(s)')
-    parser.add_argument('--source', type=str, default='inference/images', help='source')  # file/folder, 0 for webcam
+    parser.add_argument('--weights', nargs='+', type=str, default='best.pt', help='model.pt path(s)')
+    parser.add_argument('--source', type=str, default='datasets/test/IMG_0155.JPG',
+                        help='source')  # file/folder, 0 for webcam
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.25, help='object confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.45, help='IOU threshold for NMS')
-    parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
+    parser.add_argument('--device', default='0', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--view-img', action='store_true', help='display results')
     parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
     parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
@@ -203,8 +205,6 @@ if __name__ == '__main__':
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--no-trace', action='store_true', help='don`t trace model')
     opt = parser.parse_args()
-    print(opt)
-    #check_requirements(exclude=('pycocotools', 'thop'))
+    run_detection(opt)
 
-    detect_main(opt)
 

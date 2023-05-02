@@ -24,7 +24,7 @@ python cut.py --source XXXX --label XXXXX
 python pretreat.py --source XXXX
 ```
 
-5. 对于预处理后的图片进行分割
+5. 对于预处理后的图片进行分割，其中也包含了归一化过程
 ```angular2html
 python devide.py --source XXXX
 ```
@@ -32,4 +32,6 @@ python devide.py --source XXXX
 6. 生成训练模板匹配识别模型图片的脚本 generate.py，其根据./fonts文件夹下的字体  
    生成不同的数字和大写英文字母的白色字体黑色背景的大小为512 * 512 的二值化图片，  
    以用于训练模板匹配识别经过处理的包含单个编号字符的二值化图片
+
+7. 对于分割且归一化后的图片进行识别，调用的是 recognition.py 脚本
 

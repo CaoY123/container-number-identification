@@ -49,6 +49,7 @@ val2017.zip
 # 排除数据集文件的图片和通过yolov7生成的标注文件
 /datasets/labels/
 /datasets/images/
+/runs/detect/*/labels/
 
 # MATLAB GitIgnore -----------------------------------------------------------------------------------------------------
 *.m~

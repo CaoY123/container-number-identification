@@ -2,14 +2,7 @@ import cv2
 import os
 import argparse
 
-# 裁剪已经标定的部分
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, help='picture file')
-    parser.add_argument('--label', type=str, help='标定框坐标文件')
-    opt = parser.parse_args()
-    print(opt)
-
+def run_cut(opt):
     labelPath = opt.label
 
     # 读取txt文件
@@ -33,10 +26,10 @@ if __name__ == '__main__':
 
         # 计算目标区域的左上角和右下角坐标
         image_height, image_width, _ = image.shape
-        x1 = int((x - width/2) * image_width)
-        y1 = int((y - height/2) * image_height)
-        x2 = int((x + width/2) * image_width)
-        y2 = int((y + height/2) * image_height)
+        x1 = int((x - width / 2) * image_width)
+        y1 = int((y - height / 2) * image_height)
+        x2 = int((x + width / 2) * image_width)
+        y2 = int((y + height / 2) * image_height)
 
         # 绘制矩形框
         cv2.rectangle(image, (x1, y1), (x2, y2), (0, 0, 255), 2)
@@ -52,4 +45,16 @@ if __name__ == '__main__':
             print("写入" + filename + "成功")
         else:
             print("写入" + filename + "失败")
+
+    return filename
+
+# 裁剪已经标定的部分
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--source', type=str, default='runs/detect/exp13/IMG_0155.JPG',help='picture file')
+    parser.add_argument('--label', type=str, default='runs/detect/exp13/labels/IMG_0155.txt', help='标定框坐标文件')
+    opt = parser.parse_args()
+    print(opt)
+
+    run_cut(opt)
 

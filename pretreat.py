@@ -21,16 +21,10 @@ def contrast_stretching(img, low_percent=1, high_percent=99):
     img_stretched[img_stretched > 255] = 255
     return img_stretched.astype(np.uint8)
 
-if __name__ == '__main__':
-
+def run_pretreat(opt):
     pre_treat_images_dir = './binary_images';
     if not os.path.exists(pre_treat_images_dir):
         os.mkdir(pre_treat_images_dir)
-
-    # 读取解析参数
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, help='picture file')
-    opt = parser.parse_args()
 
     # 读取彩色图像
     image_path = opt.source
@@ -77,7 +71,6 @@ if __name__ == '__main__':
         maxNum = height
         minNum = width
 
-
     if maxNum < 1000:
         rate = maxNum * 1.0 / minNum
         randNum = random.randint(100, 300) + 1000
@@ -86,29 +79,6 @@ if __name__ == '__main__':
         else:
             img = cv2.resize(img, (randNum, int(randNum / rate)))
 
-
-
-    # 7. 应用中值滤波器进一步减少椒盐噪声
-    # final_img = cv2.medianBlur(opened_image, ksize)
-
-    # 使用自适应阈值方法进行二值化
-    # binary_img = cv2.adaptiveThreshold(equalized_img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
-
-    # 进行腐蚀操作
-    # eroded_image = cv2.erode(final_img, kernel, iterations=iterations)
-
-    # # # 进行膨胀操作
-    # dilated_image = cv2.dilate(eroded_image, kernel, iterations=iterations)
-
-    # # # 进行闭操作
-    # closed_image = cv2.morphologyEx(opened_image, cv2.MORPH_CLOSE, kernel, iterations=iterations)
-
-    # img = closed_image
-
-    # img = cv2.dilate(img, kernel, iterations=iterations)
-
-    # img = cv2.erode(img, kernel, iterations=iterations)
-
     image_name = os.path.splitext(os.path.basename(image_path))[0]
     filename = f"{pre_treat_images_dir}/{image_name}.jpg"
     writeResult = cv2.imwrite(filename, binary_img)
@@ -116,3 +86,11 @@ if __name__ == '__main__':
         print("存储预处理后的图片【" + filename + "】存储成功！")
     else:
         print("存储预处理后的图片【" + filename + "】存储失败！")
+
+    return filename
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--source', type=str, default='cropped_images/IMG_0155_0.jpg', help='picture file')
+    opt = parser.parse_args()
+    run_pretreat(opt)
