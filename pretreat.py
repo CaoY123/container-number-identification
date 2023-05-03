@@ -49,18 +49,9 @@ def run_pretreat(opt):
     else:
         binary_img = binary_img2
 
-    # 自适应二值化
-    # block_size = 11  # 必须是奇数
-    # C = 2
-    # binary_img = cv2.adaptiveThreshold(gaussian_blur_img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, block_size, C)
-
     # 6. 对二值图像执行开运算
     kernel = np.ones((1, 1), np.uint8)
     opened_img = cv2.morphologyEx(binary_img, cv2.MORPH_OPEN, kernel)
-
-    # 7. 应用中值滤波器进一步减少椒盐噪声
-    # ksize = 17
-    # final_img = cv2.medianBlur(opened_img, ksize)
 
     img = opened_img
     width, height = img.shape
@@ -91,6 +82,6 @@ def run_pretreat(opt):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='cropped_images/IMG_0155_0.jpg', help='picture file')
+    parser.add_argument('--source', type=str, default='cropped_images/IMG_0157_0.jpg', help='picture file')
     opt = parser.parse_args()
     run_pretreat(opt)

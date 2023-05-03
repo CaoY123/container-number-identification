@@ -16,10 +16,10 @@ match = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '7',
 
 # 准备一个由文件夹中的灰度图像组成的PyTorch数据集来训练机器学习模型。
 data_path = './generated_images'
-data_transform = transforms.Compose([
+data_transform=transforms.Compose([
     transforms.RandomRotation(degrees=15),
     transforms.RandomHorizontalFlip(),
-    transforms.Resize((62, 64)),
+    transforms.Resize((32, 32)),
     transforms.Grayscale(),
     transforms.ToTensor()
 ])
@@ -69,6 +69,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 class LeNet(nn.Module):
     def __init__(self):
         super(LeNet, self).__init__()
+        # 为网络的卷积层定义一个顺序容器。
+        # 它由两对卷积层组成，后面是sigmoid激活函数和最大池化层。
         self.conv = nn.Sequential(
             nn.Conv2d(1, 6, 5), # in_channels, out_channels, kernel_size
             nn.Sigmoid(),
@@ -77,18 +79,21 @@ class LeNet(nn.Module):
             nn.Sigmoid(),
             nn.MaxPool2d(2, 2)
         )
-        # 针对62x64图像，调整全连接层输入大小
+        # 为网络的全连接层定义顺序容器。
+        # 它由三个线性层组成，后面是sigmoid激活函数。
         self.fc = nn.Sequential(
-            nn.Linear(16 * 12 * 13, 120),
+            nn.Linear(16*5*5, 120),
             nn.Sigmoid(),
             nn.Linear(120, 84),
             nn.Sigmoid(),
             nn.Linear(84, 65)
         )
 
+    # 定义神经网络的前向传递。
+    # 它把一个图像张量作为输入，然后让它通过卷积层，
+    # 将输出压扁，并将其通过全连接层以产生输出张量。
     def forward(self, img):
         feature = self.conv(img)
-        # 针对62x64图像，调整展平特征映射的大小
         output = self.fc(feature.view(img.shape[0], -1))
         return output
 
@@ -144,11 +149,11 @@ net = LeNet()
 print(net)
 # 设置在训练期间使用的学习率和epoch数。
 lr, num_epochs = 0.001, 1000
-batch_size=128
+batch_size=256
 # 使用Adam优化算法创建一个优化器对象，用于在训练期间更新网络的权重。
 optimizer = torch.optim.Adam(net.parameters(), lr=lr)
 # 为保存的模型检查点设置文件路径。
-checkpoint_save_path = "./LeNet3.pth"
+checkpoint_save_path = "./LeNet2.pth"
 if os.path.exists(checkpoint_save_path ):
     print('load the model')
     # 加载保存的检查点(如果存在)。

@@ -126,7 +126,7 @@ def run_recognition(opt):
     # which is used to update the weights of the network during training.
     optimizer = torch.optim.Adam(net.parameters(), lr=lr)
     # sets the file path for the saved model checkpoint.
-    checkpoint_save_path = "./LeNet1.pth"
+    checkpoint_save_path = "./LeNet2.pth"
     if os.path.exists(checkpoint_save_path):
         print('load the model')
         # loads the saved checkpoint if it exists.
@@ -149,7 +149,7 @@ def run_recognition(opt):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='./singledigit/IMG_0155_0', help='picture file')
+    parser.add_argument('--source', type=str, default='./singledigit/IMG_0157.JPG', help='picture file')
     opt = parser.parse_args()
     run_recognition(opt)
     # pre_path = './singledigit/IMG_0154_0/'
