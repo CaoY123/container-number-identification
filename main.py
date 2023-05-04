@@ -96,7 +96,7 @@ def main(opt):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='datasets/test/IMG_20160611_14533812.jpg', help='picture file')
+    parser.add_argument('--source', type=str, default='datasets/test/IMG_0164.JPG', help='picture file')
     opt = parser.parse_args()
     main(opt)
     sys.exit()

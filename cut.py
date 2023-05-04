@@ -51,8 +51,8 @@ def run_cut(opt):
 # 裁剪已经标定的部分
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='runs/detect/exp13/IMG_0155.JPG',help='picture file')
-    parser.add_argument('--label', type=str, default='runs/detect/exp13/labels/IMG_0155.txt', help='标定框坐标文件')
+    parser.add_argument('--source', type=str, default='runs/detect/exp61/IMG_20160611_145128.jpg',help='picture file')
+    parser.add_argument('--label', type=str, default='runs/detect/exp61/labels/IMG_20160611_145128.txt', help='标定框坐标文件')
     opt = parser.parse_args()
     print(opt)
 
