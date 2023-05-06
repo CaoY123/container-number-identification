@@ -1,10 +1,12 @@
 import os
 import sys
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageChops
 import random
 import shutil
 import numpy as np
 from config import base_dir
+from scipy import ndimage
+import cv2
 
 # 生成用于训练模板匹配识别的图片
 
@@ -15,6 +17,44 @@ characters = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
 TARGET_IMAGE_SIZE = (512, 512)
 
 # base_dir = os.path.dirname(os.path.abspath(__file__))
+def generate_hollow_image(char, index, outline_width=5):
+    # Set the image size and font
+    image_size_height = 480
+    image_size_width = 256
+    image_size = (image_size_width, image_size_height)
+    font_boldness = random.uniform(0.1, 1.5)
+
+    # Create an image object and draw black character
+    image = Image.new("1", image_size, 0)
+    draw = ImageDraw.Draw(image)
+
+    # Select a random font
+    font_path = random.choice(font_paths)
+
+    # Calculate the minimum font size to fill the image
+    font_size = min(image_size_height, image_size_width)
+    font = ImageFont.truetype(font_path, font_size)
+
+    # Draw the character on the image with white color and boldness factor
+    font_bold = ImageFont.truetype(font_path, font_size)
+    font_bold.boldness = int(font_size * font_boldness)
+
+    draw.text((0, 0), char, font=font_bold, fill=1)
+
+    # Convert the PIL image to a NumPy array
+    img_array = np.array(image, dtype=np.uint8) * 255
+
+    # Apply morphological operations
+    kernel = np.ones((outline_width, outline_width), np.uint8)
+    erosion = cv2.erode(img_array, kernel, iterations=1)
+    dilation = cv2.dilate(erosion, kernel, iterations=1)
+    hollow_image = cv2.subtract(dilation, erosion)
+
+    # Convert the NumPy array back to a PIL image
+    hollow_image_pil = Image.fromarray(hollow_image)
+
+    print('图片编号: ' + str(index) + ': 图片名: 【' + str(index) + '_' + char + '.png】, 字符字重: 【' + str(font_boldness) + '】')
+    return hollow_image_pil
 
 def generate_image3(char, index):
     # Set the image size and font
@@ -154,12 +194,15 @@ for i in range(0, len(characters)):
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    else:
-        shutil.rmtree(save_dir)
-        os.makedirs(save_dir)
+    # else:
+    #     shutil.rmtree(save_dir)
+    #     os.makedirs(save_dir)
 
     for j in range(num_images):
+        # 生成实心字符
+        index = j
         img = generate_image4(char, j)
+        # 生成空心字符(每次生成一种，需要的时候把下面两句放开，上面两句关闭)
         # 将PIL.Image.Image对象转换为NumPy数组
         img_np = np.array(img.convert('L'))
 
@@ -205,7 +248,7 @@ for i in range(0, len(characters)):
         # 进行图片大小的调整
         img_resized = img_cropped.resize(TARGET_IMAGE_SIZE, Image.LANCZOS)
 
-        img_resized.save(save_dir + char + '_' + str(j) + '.png')
+        img_resized.save(save_dir + char + '_' + str(index) + '.png')
 
 print("==============================the end of procedure==============================")
 sys.exit()

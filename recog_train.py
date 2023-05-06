@@ -8,12 +8,6 @@ import time
 import sys
 import cv2
 import os
-# 训练识别单个字符
-# 集装箱编号字符数组
-match = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '7', 9: '9', 10: 'A', 11: 'B', 12: 'C',
-            13: 'D', 14: 'E', 15: 'F', 16: 'G', 17: 'H', 18: "I", 19: 'J', 20: 'K', 21: 'L', 22: 'M', 23: 'N', 24: "O",
-            25: 'P', 26: 'Q', 27: 'R', 28: 'S', 29: 'T', 30: 'U', 31: 'V', 32: 'W', 33: 'X', 34: 'Y', 35: 'Z'}
-
 # 准备一个由文件夹中的灰度图像组成的PyTorch数据集来训练机器学习模型。
 data_path = './generated_images'
 data_transform = transforms.Compose([
@@ -143,12 +137,12 @@ def train(net, train_iter, test_iter, batch_size, optimizer, device, num_epochs)
 net = LeNet()
 print(net)
 # 设置在训练期间使用的学习率和epoch数。
-lr, num_epochs = 0.001, 1000
+lr, num_epochs = 0.001, 300
 batch_size=128
 # 使用Adam优化算法创建一个优化器对象，用于在训练期间更新网络的权重。
 optimizer = torch.optim.Adam(net.parameters(), lr=lr)
 # 为保存的模型检查点设置文件路径。
-checkpoint_save_path = "./LeNet3.pth"
+checkpoint_save_path = "./LeNet4.pth"
 if os.path.exists(checkpoint_save_path ):
     print('load the model')
     # 加载保存的检查点(如果存在)。

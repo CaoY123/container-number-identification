@@ -10,27 +10,7 @@ plt.style.use('seaborn')
 
 # 对预处理后的二值图片进行字符的分割
 # 标准化后的每个字符图片的大小：
-NORMAL_IMAGE_SIZE = (62, 64)
-
-def filter_contours(contours, binary_img, min_aspect_ratio=0.3, max_aspect_ratio=3.0, max_width_ratio=1 / 10,
-                    max_height_ratio=0.88, min_width_ratio=1 / 36, min_height_ratio=1 / 5):
-    filtered_contours = []
-    img_height, img_width = binary_img.shape
-
-    max_width = img_width * max_width_ratio
-    max_height = img_height * max_height_ratio
-    min_width = img_width * min_width_ratio
-    min_height = img_height * min_height_ratio
-
-    for contour in contours:
-        x, y, w, h = cv2.boundingRect(contour)
-        aspect_ratio = w / h
-
-        # 根据宽高比和宽高像素数量过滤轮廓
-        if min_aspect_ratio <= aspect_ratio <= max_aspect_ratio and min_width <= w <= max_width and min_height <= h <= max_height:
-            filtered_contours.append(contour)
-
-    return filtered_contours
+NORMAL_IMAGE_SIZE = (64, 64)
 
 def find_contours(binary_img):
     contours, _ = cv2.findContours(binary_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -49,7 +29,7 @@ def save_chars(binary_img, contours, output_dir, binary_img_path):
     contour_ratios_and_counts = []
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
-        char_img = binary_img[y:y + h, x:x + w].copy()
+        char_img = binary_img[y:y + h, x:x + w]
         ratio = white_pixel_ratio(char_img)
         white_pixel_count = np.sum(char_img == 255)
         contour_ratios_and_counts.append((contour, ratio, white_pixel_count, x, y))
@@ -66,8 +46,7 @@ def save_chars(binary_img, contours, output_dir, binary_img_path):
     for contour, ratio, _, x, y in top_contours:
         w, h = cv2.boundingRect(contour)[2:]
 
-        char_img = binary_img[y:y + h, x:x + w].copy()
-
+        char_img = binary_img[y:y + h, x:x + w]
         char_img = cv2.resize(char_img, NORMAL_IMAGE_SIZE)
 
         char_dir = os.path.join(output_dir, chr(97 + t))
@@ -92,9 +71,7 @@ def process_image(binary_img_path):
     os.makedirs(output_dir)
 
     contours = find_contours(binary_img)
-    # 过滤轮廓
-    filtered_contours = filter_contours(contours, binary_img)
-    save_chars(binary_img, filtered_contours, output_dir, binary_img_path)
+    save_chars(binary_img, contours, output_dir, binary_img_path)
 
     return output_dir
 
@@ -105,7 +82,7 @@ def run_devide(opt):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='binary_images/IMG_0155_0.jpg', help='picture file')
+    parser.add_argument('--source', type=str, default='binary_images/IMG_0164_0.jpg', help='picture file')
     opt = parser.parse_args()
     run_devide(opt)
     sys.exit()
