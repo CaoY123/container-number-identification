@@ -92,7 +92,8 @@ def run_pretreat(opt):
     img = closed_img
 
     # 7. 去除外边缘的白色框
-    set_border_black(img, border_size=5)
+    height, width = binary_img.shape
+    set_border_black(img, border_size=int(height * 0.05))
 
     image_name = os.path.splitext(os.path.basename(image_path))[0]
     filename = f"{pre_treat_images_dir}/{image_name}.jpg"

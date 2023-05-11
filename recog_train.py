@@ -8,20 +8,49 @@ import time
 import sys
 import cv2
 import os
+from PIL import Image
+from torchvision.transforms import functional as F
 # 训练识别单个字符
 # 集装箱编号字符数组
 match = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '7', 9: '9', 10: 'A', 11: 'B', 12: 'C',
             13: 'D', 14: 'E', 15: 'F', 16: 'G', 17: 'H', 18: "I", 19: 'J', 20: 'K', 21: 'L', 22: 'M', 23: 'N', 24: "O",
             25: 'P', 26: 'Q', 27: 'R', 28: 'S', 29: 'T', 30: 'U', 31: 'V', 32: 'W', 33: 'X', 34: 'Y', 35: 'Z'}
 
+class CustomTransforms():
+    def __init__(self, noise_factor=0.05):
+        self.noise_factor = noise_factor
+
+    def __call__(self, img):
+        img = self.add_noise(img)
+        img = self.morphological_transform(img)
+        return img
+
+    def add_noise(self, img):
+        img = np.array(img).astype(np.float32)
+        noise = np.random.normal(0, self.noise_factor, img.shape)
+        img += noise
+        img = np.clip(img, 0., 255.)
+        return Image.fromarray(img.astype(np.uint8))
+
+    def morphological_transform(self, img):
+        img = np.array(img)
+        img = cv2.erode(img, None, iterations=2)
+        img = cv2.dilate(img, None, iterations=2)
+        return Image.fromarray(img)
+
+custom_transforms = CustomTransforms()
+
 # 准备一个由文件夹中的灰度图像组成的PyTorch数据集来训练机器学习模型。
 data_path = './generated_images'
 data_transform = transforms.Compose([
     transforms.RandomRotation(degrees=15),
     transforms.RandomHorizontalFlip(),
-    transforms.Resize((62, 64)),
+    transforms.RandomAffine(degrees=0, translate=(0.1, 0.1)),
+    transforms.RandomAffine(degrees=0, scale=(0.8, 1.2)),
+    transforms.Resize((100, 100)),
     transforms.Grayscale(),
-    transforms.ToTensor()
+    custom_transforms,  # Add your custom transforms here
+    transforms.ToTensor(),
 ])
 dataset=ImageFolder(data_path,transform=data_transform)
 
@@ -70,26 +99,25 @@ class LeNet(nn.Module):
     def __init__(self):
         super(LeNet, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(1, 6, 5), # in_channels, out_channels, kernel_size
+            nn.Conv2d(1, 6, 5),  # 输入：(b x 1 x 100 x 100)，输出：(b x 6 x 96 x 96)
             nn.Sigmoid(),
-            nn.MaxPool2d(2, 2), # kernel_size, stride
-            nn.Conv2d(6, 16, 5),
+            nn.MaxPool2d(2, 2),  # 输入：(b x 6 x 96 x 96)，输出：(b x 6 x 48 x 48)
+            nn.Conv2d(6, 16, 5),  # 输入：(b x 6 x 48 x 48)，输出：(b x 16 x 44 x 44)
             nn.Sigmoid(),
-            nn.MaxPool2d(2, 2)
+            nn.MaxPool2d(2, 2)  # 输入：(b x 16 x 44 x 44)，输出：(b x 16 x 22 x 22)
         )
-        # 针对62x64图像，调整全连接层输入大小
+
         self.fc = nn.Sequential(
-            nn.Linear(16 * 12 * 13, 120),
+            nn.Linear(16 * 22 * 22, 120),
             nn.Sigmoid(),
             nn.Linear(120, 84),
             nn.Sigmoid(),
-            nn.Linear(84, 65)
+            nn.Linear(84, len(match))
         )
 
     def forward(self, img):
         feature = self.conv(img)
-        # 针对62x64图像，调整展平特征映射的大小
-        output = self.fc(feature.view(img.shape[0], -1))
+        output = self.fc(feature.view(img.shape[0], -1))  # 输入：(b x 16 x 22 x 22)，输出：(b x len(match))
         return output
 
 # 计算神经网络模型在给定数据集上的准确性。
@@ -143,12 +171,12 @@ def train(net, train_iter, test_iter, batch_size, optimizer, device, num_epochs)
 net = LeNet()
 print(net)
 # 设置在训练期间使用的学习率和epoch数。
-lr, num_epochs = 0.001, 1000
-batch_size=128
+lr, num_epochs = 0.0005, 800
+batch_size=144
 # 使用Adam优化算法创建一个优化器对象，用于在训练期间更新网络的权重。
 optimizer = torch.optim.Adam(net.parameters(), lr=lr)
 # 为保存的模型检查点设置文件路径。
-checkpoint_save_path = "./LeNet3.pth"
+checkpoint_save_path = "./LeNet16.pth"
 if os.path.exists(checkpoint_save_path ):
     print('load the model')
     # 加载保存的检查点(如果存在)。

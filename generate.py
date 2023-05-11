@@ -12,7 +12,7 @@ from config import base_dir
 characters = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
 
 # 设置最终保存图片的统一的大小：512 * 512像素
-TARGET_IMAGE_SIZE = (512, 512)
+TARGET_IMAGE_SIZE = (256, 256)
 
 # base_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -154,9 +154,9 @@ for i in range(0, len(characters)):
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    else:
-        shutil.rmtree(save_dir)
-        os.makedirs(save_dir)
+    # else:
+    #     shutil.rmtree(save_dir)
+    #     os.makedirs(save_dir)
 
     for j in range(num_images):
         img = generate_image4(char, j)

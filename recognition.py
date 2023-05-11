@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 # Recognize a single character
 
 # 图片大小
-TARGET_IMAGE_SIZE = (32, 32)
+TARGET_IMAGE_SIZE = (100, 100)
 
 # 计算图像在指定轴上的投影。它接收一个二值化的图像和一个轴参数。返回在指定轴上的投影。
 # 当axis=0时，计算垂直投影；当axis=1时，计算水平投影。
@@ -68,32 +68,26 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 class LeNet(nn.Module):
     def __init__(self):
         super(LeNet, self).__init__()
-        # defines a sequential container for the convolutional layers of the network.
-        # It consists of two pairs of convolutional layers followed by sigmoid activation functions and max pooling layers.
         self.conv = nn.Sequential(
-            nn.Conv2d(1, 6, 5), # in_channels, out_channels, kernel_size
+            nn.Conv2d(1, 6, 5),  # 输入：(b x 1 x 100 x 100)，输出：(b x 6 x 96 x 96)
             nn.Sigmoid(),
-            nn.MaxPool2d(2, 2), # kernel_size, stride
-            nn.Conv2d(6, 16, 5),
+            nn.MaxPool2d(2, 2),  # 输入：(b x 6 x 96 x 96)，输出：(b x 6 x 48 x 48)
+            nn.Conv2d(6, 16, 5),  # 输入：(b x 6 x 48 x 48)，输出：(b x 16 x 44 x 44)
             nn.Sigmoid(),
-            nn.MaxPool2d(2, 2)
+            nn.MaxPool2d(2, 2)  # 输入：(b x 16 x 44 x 44)，输出：(b x 16 x 22 x 22)
         )
-        # defines a sequential container for the fully connected layers of the network.
-        # It consists of three linear layers followed by sigmoid activation functions.
+
         self.fc = nn.Sequential(
-            nn.Linear(16*5*5, 120),
+            nn.Linear(16 * 22 * 22, 120),
             nn.Sigmoid(),
             nn.Linear(120, 84),
             nn.Sigmoid(),
-            nn.Linear(84, 65)
+            nn.Linear(84, len(match))
         )
 
-    # defines the forward pass of the neural network.
-    # It takes an image tensor as input and passes it through the convolutional layers,
-    # flattens the output, and passes it through the fully connected layers to produce the output tensor.
     def forward(self, img):
         feature = self.conv(img)
-        output = self.fc(feature.view(img.shape[0], -1))
+        output = self.fc(feature.view(img.shape[0], -1))  # 输入：(b x 16 x 22 x 22)，输出：(b x len(match))
         return output
 
 # It takes an image and a neural network model as input and returns the predicted label of the image.
@@ -126,7 +120,7 @@ def run_recognition(opt):
     # which is used to update the weights of the network during training.
     optimizer = torch.optim.Adam(net.parameters(), lr=lr)
     # sets the file path for the saved model checkpoint.
-    checkpoint_save_path = "./LeNet2.pth"
+    checkpoint_save_path = "./LeNet16.pth"
     if os.path.exists(checkpoint_save_path):
         print('load the model')
         # loads the saved checkpoint if it exists.
@@ -137,7 +131,7 @@ def run_recognition(opt):
 
     pre_transform = transforms.Compose([
         transforms.Grayscale(),
-        transforms.CenterCrop(size=(32, 32)),
+        transforms.CenterCrop(size=(100, 100)),
         transforms.ToTensor()
     ])
     preset = ImageFolder(opt.source, transform=pre_transform)
@@ -149,7 +143,7 @@ def run_recognition(opt):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='./singledigit/IMG_0157.JPG', help='picture file')
+    parser.add_argument('--source', type=str, default='./singledigit/IMG_0155_0', help='picture file')
     opt = parser.parse_args()
     run_recognition(opt)
     # pre_path = './singledigit/IMG_0154_0/'
