@@ -165,7 +165,7 @@ def detect(opt, save_img=False):
         #print(f"Results saved to {save_dir}{s}")
 
     print(f'Done. ({time.time() - t0:.3f}s)')
-    return save_dir
+    return opt.source, save_dir
 
 def detect_main(opt):
     print('opt参数情况：')
@@ -186,7 +186,7 @@ def run_detection(opt):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default='best.pt', help='model.pt path(s)')
-    parser.add_argument('--source', type=str, default='datasets/test/IMG_0155.JPG',
+    parser.add_argument('--source', type=str, default='datasets/test/IMG_0417.JPG',
                         help='source')  # file/folder, 0 for webcam
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.25, help='object confidence threshold')

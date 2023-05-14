@@ -57,43 +57,36 @@ def run_pretreat(opt):
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # 对比度拉伸
-    stretched_img = contrast_stretching(gray_img)
-    # equalized_img = cv2.equalizeHist(stretched_img)
+    gray_img = contrast_stretching(gray_img)
+    std_dev = np.std(gray_img)  # 像素标准差
+    i = 0
+    while std_dev < 60:
+        c = 255 / np.log(1 + np.max(gray_img))
+        log_transformed = c * np.log(1 + gray_img)
+        log_transformed = np.array(log_transformed, dtype=np.uint8)
+        gray_img = log_transformed  # 更新图像
+        std_dev = np.std(gray_img)  # 像素标准差
+        print(f'After stretch #{i + 1}, the standard deviation is: {std_dev}')
+        i = i + 1
 
-    # 3. 高斯滤波
-    # gaussian_blur_img = cv2.GaussianBlur(stretched_img, (3, 3), 0)
+    # 结果图像
+    stretched_img = gray_img
 
-    # 双边滤波
-    # filtered_img = cv2.bilateralFilter(equalized_img, 9, 75, 75)
+    ret, binary_img = cv2.threshold(stretched_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-    binary_img = cv2.adaptiveThreshold(stretched_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 31, 10)
+    # 分别对对黑白像素的数量计数
+    white_pixels = np.sum(binary_img == 255)
+    black_pixels = np.sum(binary_img == 0)
 
-    # 6. 对二值图像执行开运算
-    kernel = np.ones((3, 3), np.uint8)
-    opened_img = cv2.morphologyEx(binary_img, cv2.MORPH_OPEN, kernel)
+    # 如果是白色像素多（认为是白色背景），则要进行字符像素值的反转
+    if white_pixels > black_pixels:
+        binary_img = cv2.bitwise_not(binary_img)
 
-    # 5. 对二值图像执行闭运算，填补间断的白线
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    closed_img = cv2.morphologyEx(opened_img, cv2.MORPH_CLOSE, kernel)
-
-    # 统计二值化图像中黑白像素点的数量比例
-    black_pixels = np.sum(closed_img == 0)
-    white_pixels = np.sum(closed_img == 255)
-    ratio = black_pixels / white_pixels
-
-    # 7. 根据比例确定二值化后的前景和背景颜色
-    if ratio > 0.5:
-        foreground_color = 0
-        background_color = 255
-    else:
-        foreground_color = 255
-        background_color = 0
-
-    img = closed_img
+    img = binary_img
 
     # 7. 去除外边缘的白色框
-    height, width = binary_img.shape
-    set_border_black(img, border_size=int(height * 0.05))
+    # height, width = binary_img.shape
+    # set_border_black(img, border_size=int(height * 0.05))
 
     image_name = os.path.splitext(os.path.basename(image_path))[0]
     filename = f"{pre_treat_images_dir}/{image_name}.jpg"
@@ -107,6 +100,6 @@ def run_pretreat(opt):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='cropped_images/IMG_0164_0.jpg', help='picture file')
+    parser.add_argument('--source', type=str, default='cropped_images/IMG_20160611_150522_0.jpg', help='picture file')
     opt = parser.parse_args()
     run_pretreat(opt)

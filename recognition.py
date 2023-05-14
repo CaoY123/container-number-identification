@@ -8,10 +8,12 @@ import sys
 import os
 import argparse
 from PIL import Image, ImageDraw, ImageFont
+from torch.nn import functional as F
+import cv2
 # Recognize a single character
 
 # 图片大小
-TARGET_IMAGE_SIZE = (100, 100)
+TARGET_IMAGE_SIZE = (32, 32)
 
 # 计算图像在指定轴上的投影。它接收一个二值化的图像和一个轴参数。返回在指定轴上的投影。
 # 当axis=0时，计算垂直投影；当axis=1时，计算水平投影。
@@ -53,10 +55,31 @@ def split_lines(image, valleys, flag=0):
     return lines
 
 #the array of license plate character
-match = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '7', 9: '9', 10: 'A', 11: 'B', 12: 'C',
+match = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9', 10: 'A', 11: 'B', 12: 'C',
             13: 'D', 14: 'E', 15: 'F', 16: 'G', 17: 'H', 18: "I", 19: 'J', 20: 'K', 21: 'L', 22: 'M', 23: 'N', 24: "O",
             25: 'P', 26: 'Q', 27: 'R', 28: 'S', 29: 'T', 30: 'U', 31: 'V', 32: 'W', 33: 'X', 34: 'Y', 35: 'Z'}
 
+class CustomTransforms():
+    def __init__(self, noise_factor=0.05):
+        self.noise_factor = noise_factor
+
+    def __call__(self, img):
+        img = self.add_noise(img)
+        img = self.morphological_transform(img)
+        return img
+
+    def add_noise(self, img):
+        img = np.array(img).astype(np.float32)
+        noise = np.random.normal(0, self.noise_factor, img.shape)
+        img += noise
+        img = np.clip(img, 0., 255.)
+        return Image.fromarray(img.astype(np.uint8))
+
+    def morphological_transform(self, img):
+        img = np.array(img)
+        img = cv2.erode(img, None, iterations=2)
+        img = cv2.dilate(img, None, iterations=2)
+        return Image.fromarray(img)
 # lenet training
 # appends the parent directory to the system path to import modules from it.
 sys.path.append("..")
@@ -69,25 +92,25 @@ class LeNet(nn.Module):
     def __init__(self):
         super(LeNet, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(1, 6, 5),  # 输入：(b x 1 x 100 x 100)，输出：(b x 6 x 96 x 96)
-            nn.Sigmoid(),
-            nn.MaxPool2d(2, 2),  # 输入：(b x 6 x 96 x 96)，输出：(b x 6 x 48 x 48)
-            nn.Conv2d(6, 16, 5),  # 输入：(b x 6 x 48 x 48)，输出：(b x 16 x 44 x 44)
-            nn.Sigmoid(),
-            nn.MaxPool2d(2, 2)  # 输入：(b x 16 x 44 x 44)，输出：(b x 16 x 22 x 22)
+            nn.Conv2d(1, 6, 5),  # in_channels=1, out_channels=6
+            nn.ReLU(),  # Use ReLU activation function
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(6, 16, 5),  # in_channels=6, out_channels=16
+            nn.ReLU(),  # Use ReLU activation function
+            nn.MaxPool2d(2, 2)
         )
-
+        # Fully connected layers
         self.fc = nn.Sequential(
-            nn.Linear(16 * 22 * 22, 120),
-            nn.Sigmoid(),
+            nn.Linear(16*5*5, 120),  # Input size is now 16*5*5
+            nn.ReLU(),
             nn.Linear(120, 84),
-            nn.Sigmoid(),
+            nn.ReLU(),
             nn.Linear(84, len(match))
         )
 
     def forward(self, img):
         feature = self.conv(img)
-        output = self.fc(feature.view(img.shape[0], -1))  # 输入：(b x 16 x 22 x 22)，输出：(b x len(match))
+        output = self.fc(feature.view(img.shape[0], -1))  # Flatten the tensor
         return output
 
 # It takes an image and a neural network model as input and returns the predicted label of the image.
@@ -112,15 +135,16 @@ def predict(img,net,device=None):
 
 def run_recognition(opt):
     net = LeNet()
+    custom_transforms = CustomTransforms()
     print(net)
     # sets the learning rate and number of epochs to use during training.
-    lr, num_epochs = 0.001, 20
+    lr, num_epochs = 0.005, 300
     batch_size = 256
     # creates an optimizer object using the Adam optimization algorithm,
     # which is used to update the weights of the network during training.
-    optimizer = torch.optim.Adam(net.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=0.001)
     # sets the file path for the saved model checkpoint.
-    checkpoint_save_path = "./LeNet16.pth"
+    checkpoint_save_path = "./LeNet70.pth"
     if os.path.exists(checkpoint_save_path):
         print('load the model')
         # loads the saved checkpoint if it exists.
@@ -130,9 +154,10 @@ def run_recognition(opt):
         sys.exit()
 
     pre_transform = transforms.Compose([
+        transforms.Resize(TARGET_IMAGE_SIZE),
         transforms.Grayscale(),
-        transforms.CenterCrop(size=(100, 100)),
-        transforms.ToTensor()
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5], std=[0.5]),  # Normalize the data to 0-1
     ])
     preset = ImageFolder(opt.source, transform=pre_transform)
     pre_iter = DataLoader(preset)
@@ -143,7 +168,7 @@ def run_recognition(opt):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='./singledigit/IMG_0155_0', help='picture file')
+    parser.add_argument('--source', type=str, default='./singledigit/IMG_0162_0', help='picture file')
     opt = parser.parse_args()
     run_recognition(opt)
     # pre_path = './singledigit/IMG_0154_0/'

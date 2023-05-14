@@ -37,7 +37,7 @@ def main(opt):
     detect_opt.exist_ok = False
     detect_opt.no_trace = False
 
-    detect_save_dir = detect.run_detection(detect_opt)
+    detected_image_file, detect_save_dir = detect.run_detection(detect_opt)
     print(f"Result save directory from caller: {detect_save_dir}")
 
     # ****************************************************************
@@ -45,7 +45,7 @@ def main(opt):
     # 读取文件夹下的所有文件
     all_files = glob.glob(os.path.join(detect_save_dir, '*'))
     # 获取文件夹下的唯一图片文件
-    detected_image_file = get_image_file(all_files)
+    # detected_image_file = get_image_file(all_files)
     image_file_path = ''
     if detected_image_file:
         image_file_path = os.path.relpath(os.path.join(detected_image_file), os.getcwd())
@@ -96,7 +96,7 @@ def main(opt):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='datasets/test/IMG_20160611_14533812.jpg', help='picture file')
+    parser.add_argument('--source', type=str, default='datasets/test/IMG_0165.JPG', help='picture file')
     opt = parser.parse_args()
     main(opt)
     sys.exit()

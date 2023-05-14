@@ -12,7 +12,7 @@ from PIL import Image
 from torchvision.transforms import functional as F
 # 训练识别单个字符
 # 集装箱编号字符数组
-match = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '7', 9: '9', 10: 'A', 11: 'B', 12: 'C',
+match = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9', 10: 'A', 11: 'B', 12: 'C',
             13: 'D', 14: 'E', 15: 'F', 16: 'G', 17: 'H', 18: "I", 19: 'J', 20: 'K', 21: 'L', 22: 'M', 23: 'N', 24: "O",
             25: 'P', 26: 'Q', 27: 'R', 28: 'S', 29: 'T', 30: 'U', 31: 'V', 32: 'W', 33: 'X', 34: 'Y', 35: 'Z'}
 
@@ -47,10 +47,11 @@ data_transform = transforms.Compose([
     transforms.RandomHorizontalFlip(),
     transforms.RandomAffine(degrees=0, translate=(0.1, 0.1)),
     transforms.RandomAffine(degrees=0, scale=(0.8, 1.2)),
-    transforms.Resize((100, 100)),
+    transforms.Resize((32, 32)),
     transforms.Grayscale(),
     custom_transforms,  # Add your custom transforms here
     transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5], std=[0.5]),  # Normalize the data to 0-1
 ])
 dataset=ImageFolder(data_path,transform=data_transform)
 
@@ -99,26 +100,27 @@ class LeNet(nn.Module):
     def __init__(self):
         super(LeNet, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(1, 6, 5),  # 输入：(b x 1 x 100 x 100)，输出：(b x 6 x 96 x 96)
-            nn.Sigmoid(),
-            nn.MaxPool2d(2, 2),  # 输入：(b x 6 x 96 x 96)，输出：(b x 6 x 48 x 48)
-            nn.Conv2d(6, 16, 5),  # 输入：(b x 6 x 48 x 48)，输出：(b x 16 x 44 x 44)
-            nn.Sigmoid(),
-            nn.MaxPool2d(2, 2)  # 输入：(b x 16 x 44 x 44)，输出：(b x 16 x 22 x 22)
+            nn.Conv2d(1, 6, 5),  # in_channels=1, out_channels=6
+            nn.ReLU(),  # Use ReLU activation function
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(6, 16, 5),  # in_channels=6, out_channels=16
+            nn.ReLU(),  # Use ReLU activation function
+            nn.MaxPool2d(2, 2)
         )
-
+        # Fully connected layers
         self.fc = nn.Sequential(
-            nn.Linear(16 * 22 * 22, 120),
-            nn.Sigmoid(),
+            nn.Linear(16*5*5, 120),  # Input size is now 16*5*5
+            nn.ReLU(),
             nn.Linear(120, 84),
-            nn.Sigmoid(),
+            nn.ReLU(),
             nn.Linear(84, len(match))
         )
 
     def forward(self, img):
         feature = self.conv(img)
-        output = self.fc(feature.view(img.shape[0], -1))  # 输入：(b x 16 x 22 x 22)，输出：(b x len(match))
+        output = self.fc(feature.view(img.shape[0], -1))  # Flatten the tensor
         return output
+
 
 # 计算神经网络模型在给定数据集上的准确性。
 def evaluate_accuracy(data_iter, net, device=None):
@@ -150,8 +152,6 @@ def train(net, train_iter, test_iter, batch_size, optimizer, device, num_epochs)
     for epoch in range(num_epochs):
         train_l_sum, train_acc_sum, n, batch_count, start = 0.0, 0.0, 0, 0, time.time()
         for X, y in train_iter:
-            x=np.array(X)
-            Y=np.array(y)
             X = X.to(device)
             y = y.to(device)
             y_hat = net(X)
@@ -166,17 +166,22 @@ def train(net, train_iter, test_iter, batch_size, optimizer, device, num_epochs)
         test_acc = evaluate_accuracy(test_iter, net)
         print('epoch %d, loss %.4f, train acc %.3f, test acc %.3f, time %.1f sec'
               % (epoch + 1, train_l_sum / batch_count, train_acc_sum / n, test_acc, time.time() - start))
-
+        # 每20个epochs就保存一次模型
+        if (epoch + 1) % 20 == 0:
+            checkpoint_save_path_temp = os.path.join('recog_train', f'{checkpoint_save_path_name}_{epoch+1}.pth')
+            torch.save(net.state_dict(), checkpoint_save_path_temp)
+            print(f'Model saved to {checkpoint_save_path_temp} at epoch {epoch+1}')
 
 net = LeNet()
 print(net)
 # 设置在训练期间使用的学习率和epoch数。
-lr, num_epochs = 0.0005, 800
-batch_size=144
+lr, num_epochs = 0.0005, 400
+# batch_size=144
 # 使用Adam优化算法创建一个优化器对象，用于在训练期间更新网络的权重。
-optimizer = torch.optim.Adam(net.parameters(), lr=lr)
+optimizer = torch.optim.AdamW(net.parameters(), lr=lr, weight_decay=0.001)
 # 为保存的模型检查点设置文件路径。
-checkpoint_save_path = "./LeNet16.pth"
+checkpoint_save_path = "./LeNet90.pth"
+checkpoint_save_path_name = "LeNet90"
 if os.path.exists(checkpoint_save_path ):
     print('load the model')
     # 加载保存的检查点(如果存在)。
@@ -188,4 +193,3 @@ else:
     torch.save(net.state_dict(),checkpoint_save_path)
     print('===============================The end of train procedure===============================')
     sys.exit()
-
