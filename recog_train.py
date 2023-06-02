@@ -180,8 +180,8 @@ lr, num_epochs = 0.0005, 400
 # 使用Adam优化算法创建一个优化器对象，用于在训练期间更新网络的权重。
 optimizer = torch.optim.AdamW(net.parameters(), lr=lr, weight_decay=0.001)
 # 为保存的模型检查点设置文件路径。
-checkpoint_save_path = "./LeNet90.pth"
-checkpoint_save_path_name = "LeNet90"
+checkpoint_save_path = "./LeNet91.pth"
+checkpoint_save_path_name = "LeNet91"
 if os.path.exists(checkpoint_save_path ):
     print('load the model')
     # 加载保存的检查点(如果存在)。

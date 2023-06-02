@@ -8,12 +8,13 @@ import argparse
 import matplotlib.pyplot as plt
 plt.style.use('seaborn')
 
+# 连通域分析法分割字符
 # 对预处理后的二值图片进行字符的分割
 
 # 标准化后的每个字符图片的大小：
 NORMAL_IMAGE_SIZE = (32, 32)
 
-def split_characters(binary_img, min_width_ratio=0.01, min_height_ratio=0.1, max_width_ratio=0.15, max_height_ratio=0.9, row_threshold_ratio=0.2):
+def split_characters(binary_img, min_width_ratio=0.01, min_height_ratio=0.1, max_width_ratio=0.2, max_height_ratio=0.9, row_threshold_ratio=0.2):
     # 使用连通组件分析获取字符区域
     _, labels, stats, _ = cv2.connectedComponentsWithStats(binary_img, connectivity=4)
 
@@ -100,7 +101,7 @@ def split_characters(binary_img, min_width_ratio=0.01, min_height_ratio=0.1, max
         character_image = binary_img[y:y+h, x:x+w]
         characters.append(character_image)
 
-    return characters
+    return characters, char_data
 
 def process_image(opt):
     # 打开图像文件
@@ -119,7 +120,7 @@ def process_image(opt):
         shutil.rmtree(ing_save_dir)
         os.makedirs(ing_save_dir)
 
-    filtered_images = split_characters(binary_img)
+    filtered_images, char_data = split_characters(binary_img)
 
     # 选取前11个最大的图像
     selected_images = filtered_images[:11]
@@ -134,7 +135,13 @@ def process_image(opt):
             os.mkdir(tmp_save_dir)
         filePath = tmp_save_dir + '/' + filename_without_ext + str(i) + '.jpg'
 
-        threshold = 10  # set your threshold here
+        # 获取字符区域的位置、宽度和高度信息
+        # x, y, w, h = char_data[i]
+
+        # 在原图像上绘制白色的检测框
+        # cv2.rectangle(binary_img, (x - 3, y - 3), (x + w + 3, y + h + 3), (255, 255, 255), 2)
+
+        threshold = 5 # set your threshold here
 
         # find the indices where the image intensity is greater than or equal to the threshold
         y_indices, x_indices = np.where(image >= threshold)
@@ -153,6 +160,11 @@ def process_image(opt):
         else:
             print('保存分割后的图片【' + filePath + '】失败！')
 
+    # 保存带有检测框的图像
+    # output_path = ing_save_dir + '/' + filename_without_ext + '_with_boxes.jpg'
+    # cv2.imwrite(output_path, binary_img)
+    # print('保存带有检测框的图像【' + output_path + '】成功！')
+
     # 返回单个字符图像的文件路径列表
     return single_image_dir
 
@@ -163,7 +175,7 @@ def run_devide(opt):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='binary_images/IMG_0162_0.jpg', help='picture file')
+    parser.add_argument('--source', type=str, default='binary_images/IMG_0161_0.jpg', help='picture file')
     opt = parser.parse_args()
     run_devide(opt)
     sys.exit()

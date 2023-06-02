@@ -15,71 +15,11 @@ import cv2
 # 图片大小
 TARGET_IMAGE_SIZE = (32, 32)
 
-# 计算图像在指定轴上的投影。它接收一个二值化的图像和一个轴参数。返回在指定轴上的投影。
-# 当axis=0时，计算垂直投影；当axis=1时，计算水平投影。
-def projection(img, axis=0):
-    return np.sum(img > 128, axis=axis)
-
-# 找到投影中的谷值，即字符间的空隙。这个函数接受投影数据，以及最小宽度和最小深度作为参数。
-# 最小宽度和最小深度用于筛选谷值，确保找到的谷值是字符之间的有效空隙。
-def find_valleys(projection, min_width=5, min_depth=15):
-    valleys = []
-    width = 0
-    start_idx = 0
-    for idx, value in enumerate(projection):
-        if value < min_depth:
-            if width == 0:
-                start_idx = idx
-            width += 1
-        else:
-            if width >= min_width:
-                valleys.append((start_idx, idx))
-            width = 0
-
-    # 添加最后一个区间
-    valleys.append((start_idx, len(projection)))
-
-    return valleys
-
-# 根据谷值分割图像。这个函数接收一个图像和谷值列表，然后根据谷值将图像分割成多个部分。
-def split_lines(image, valleys, flag=0):
-    lines = []
-    if len(valleys) > 1:
-        for i in range(len(valleys) - 1):
-            start = valleys[i][1]
-            end = valleys[i + 1][0]
-            if flag == 0:
-                lines.append(image[:, start:end])
-            else:
-                lines.append(image[start:end, :])
-    return lines
-
 #the array of license plate character
 match = {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9', 10: 'A', 11: 'B', 12: 'C',
             13: 'D', 14: 'E', 15: 'F', 16: 'G', 17: 'H', 18: "I", 19: 'J', 20: 'K', 21: 'L', 22: 'M', 23: 'N', 24: "O",
             25: 'P', 26: 'Q', 27: 'R', 28: 'S', 29: 'T', 30: 'U', 31: 'V', 32: 'W', 33: 'X', 34: 'Y', 35: 'Z'}
 
-class CustomTransforms():
-    def __init__(self, noise_factor=0.05):
-        self.noise_factor = noise_factor
-
-    def __call__(self, img):
-        img = self.add_noise(img)
-        img = self.morphological_transform(img)
-        return img
-
-    def add_noise(self, img):
-        img = np.array(img).astype(np.float32)
-        noise = np.random.normal(0, self.noise_factor, img.shape)
-        img += noise
-        img = np.clip(img, 0., 255.)
-        return Image.fromarray(img.astype(np.uint8))
-
-    def morphological_transform(self, img):
-        img = np.array(img)
-        img = cv2.erode(img, None, iterations=2)
-        img = cv2.dilate(img, None, iterations=2)
-        return Image.fromarray(img)
 # lenet training
 # appends the parent directory to the system path to import modules from it.
 sys.path.append("..")
@@ -135,7 +75,6 @@ def predict(img,net,device=None):
 
 def run_recognition(opt):
     net = LeNet()
-    custom_transforms = CustomTransforms()
     print(net)
     # sets the learning rate and number of epochs to use during training.
     lr, num_epochs = 0.005, 300
@@ -168,7 +107,7 @@ def run_recognition(opt):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='./singledigit/IMG_0162_0', help='picture file')
+    parser.add_argument('--source', type=str, default='./singledigit/IMG_0180_0', help='picture file')
     opt = parser.parse_args()
     run_recognition(opt)
     # pre_path = './singledigit/IMG_0154_0/'

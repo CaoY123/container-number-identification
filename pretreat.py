@@ -82,15 +82,13 @@ def run_pretreat(opt):
     if white_pixels > black_pixels:
         binary_img = cv2.bitwise_not(binary_img)
 
-    img = binary_img
-
     # 7. 去除外边缘的白色框
     # height, width = binary_img.shape
     # set_border_black(img, border_size=int(height * 0.05))
 
     image_name = os.path.splitext(os.path.basename(image_path))[0]
     filename = f"{pre_treat_images_dir}/{image_name}.jpg"
-    writeResult = cv2.imwrite(filename, img)
+    writeResult = cv2.imwrite(filename, binary_img)
     if writeResult:
         print("存储预处理后的图片【" + filename + "】存储成功！")
     else:
@@ -100,6 +98,6 @@ def run_pretreat(opt):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', type=str, default='cropped_images/IMG_20160611_150522_0.jpg', help='picture file')
+    parser.add_argument('--source', type=str, default='cropped_images/IMG_0170_0.jpg', help='picture file')
     opt = parser.parse_args()
     run_pretreat(opt)
