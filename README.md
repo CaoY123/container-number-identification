@@ -14,7 +14,7 @@
 python train.py --weights yolov7x.pt --cfg cfg/training/yolov7-up.yaml --data data/up.yaml --batch-size 3 --epoch 300 --device 0
 ```
 之后会在runs文件夹下的train文件夹的最新文件夹内找到新生成的best.py文件，将其拷贝到项目文件夹下，作为定位编号区域的模型。  
-在定位编号区域的检测阶段，就是上手使用训练的模型去定位编号区域，使用detect.py脚本，可以通过命令：
+在定位编号区域的检测阶段，就是上手使用训练的模型去定位编号区域，使用detect.py脚本，可以通过命令：  
 ```
 python detect.py --weights best.pt --source xxx --device 0
 ```
@@ -35,9 +35,10 @@ python devide.py --source XXXX
 ```
 也可以指定存储在binary_images中的二值化图片，直接运行脚本得到分割的结果，分割的结果会存储在singledigit文件夹中，其中的每个子文件夹都是以图片名字命名的  
 5）字符分割后使用recognition.py脚本来识别编号字符，需要传入singledigit中的子文件夹的路径，然后它会使用运行recog_train.py脚本训练得到的LeNet70.pth权重文件来识别编号字符，最终输出编号字符串。  
-注：识别的结构可能不准，需要后续在Java模块中校验并纠正一下，另外，在纠正后，要意识到对于集装箱编号中最后一位字符的识别是不准确的。我参考这个https://www.jianshu.com/p/272a44381911，即根据前10位编号计算出最后一位校验码，完成识别过程  
+注：识别的结构可能不准，需要后续在Java模块中校验并纠正一下，另外，在纠正后，要意识到对于集装箱编号中最后一位字符的识别是不准确的。我参考这个链接：https://www.jianshu.com/p/272a44381911  
+即根据前10位编号计算出最后一位校验码，完成识别过程  
 
-* 参考链接：我和抱歉，本来我应该给大家提供一个搭建yolov5的环境的参考链接来着，但是当我写这篇文章的时候，那个链接已经404了，所以大家各显神通吧，祝好运。  
+* 参考链接：https://huaweicloud.csdn.net/63807f9cdacf622b8df890c6.html  
 * 在搭建好yolov5的运行环境后，从下面GitHub代码地址获取代码：https://github.com/CaoY123456/container-number-identification.git  
 * 拉取代码后，用PyCharm导入项目，需要导入相关包（这个过程会有点劝退人，尤其是涉及到版本冲突的问题，需要耐心搜索一下）  
 * 在导入相关包后，要想运行这些代码，还需要从百度网盘下载一些文件，包括一些图片文件，实验中间的数据以及训练出来的权重文件，很多东西是有点不必要的，但是我还是把它保留了  
